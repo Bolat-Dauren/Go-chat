@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Chat</title>
+    <style>
+        {
+            height: 250px;
+            overflow: scroll;
+        }
+        #notifications {
+            height: 100px;
+            overflow: scroll;
+            border: 1px solid silver;
+            padding: 5px;
+            margin: 10px 0;
+        }
+    </style>
+    <script type="text/javascript">
+        let socket = new WebSocket("ws://localhost:3000/admin");
+
+        socket.onopen = function () {
+            document.getElementById("notifications").innerHTML = "Waiting for user messages...";
+        };
+
+        socket.onmessage = function (event) {
+            const container = document.getElementById("notifications");
+            container.innerHTML += "<br>" + event.data;
+        };
+
+        function joinUserChat() {
+            const user = prompt("Enter the username of the user you want to chat with:");
+            if (user) {
+                socket.send(JSON.stringify({ action: "private_message", target: user, message: "Admin has joined the chat" }));
+                window.open("/user_chat.html?user=" + user, "_blank");
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById("message_input");
+            const msg = input.value.trim();
+            input.value = "";
+
+            if (msg.length) {
+                const user = prompt("Enter the username of the user to whom you want to send the message:");
+                if (user) {
+                    socket.send(JSON.stringify({ action: "private_message", target: user, message: msg }));
+                }
+            }
+        }
+
+        function closeSession() {
+            socket.close();
+            document.body.innerHTML = "You disconnected";
+        }
+    </script>
+</head>
+<body>
+<div id="notifications"></div>
+<button onclick="joinUserChat()">Join User Chat</button>
+<input type="text" value="" placeholder="Type message" id="message_input"/>
+<button onclick="sendMessage()">Send message</button>
+<button onclick="closeSession()">Close</button>
+</body>
+</html>
